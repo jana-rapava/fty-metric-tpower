@@ -111,7 +111,7 @@ enum asset_subtype {
 };
 
 int
-    select_assets_by_container
+    select_active_assets_by_container
         (tntdb::Connection &conn,
          a_elmnt_id_t element_id,
          std::function<void(const tntdb::Row&)> cb
@@ -129,12 +129,15 @@ int
             "   v.type_name as subtype_name, "
             "   v.id_type as type_id "
             " FROM "
-            "   v_bios_asset_element_super_parent v "
+            "   v_bios_asset_element_super_parent AS v, "
+            "   v_bios_asset_element AS v1"
             " WHERE "
             "   :containerid in (v.id_parent1, v.id_parent2, v.id_parent3, "
             "                    v.id_parent4, v.id_parent5, v.id_parent6, "
             "                    v.id_parent7, v.id_parent8, v.id_parent9, "
-            "                    v.id_parent10)"
+            "                    v.id_parent10) AND"
+            "   v.id_asset_elemet = v1.id_asset_element AND"
+            "   v1.status = \"active\""
         );
 
         tntdb::Result result = st.set("containerid", element_id).
@@ -182,11 +185,17 @@ db_reply <std::set <std::pair<a_elmnt_id_t ,a_elmnt_id_t>>>
             " FROM"
             "   v_bios_asset_link AS v,"
             "   v_bios_asset_element_super_parent AS v1,"
-            "   v_bios_asset_element_super_parent AS v2"
+            "   v_bios_asset_element_super_parent AS v2,"
+            "   v_bios_asset_element AS v3,"
+            "   v_bios_asset_element AS v4"
             " WHERE"
             "   v.id_asset_link_type = :linktypeid AND"
             "   v.id_asset_element_dest = v2.id_asset_element AND"
             "   v.id_asset_element_src = v1.id_asset_element AND"
+            "   v.id_asset_element_dest = v3.id_asset_element AND"
+            "   v.id_asset_element_src = v4.id_asset_element AND"
+            "   v3.status = \"active\" AND"
+            "   v4.status = \"active\" AND"
             "   ("
             "       ( :containerid IN (v2.id_parent1, v2.id_parent2 ,v2.id_parent3,"
             "                          v2.id_parent4, v2.id_parent5, v2.id_parent6,"
